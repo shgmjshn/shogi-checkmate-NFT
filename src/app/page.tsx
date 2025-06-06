@@ -136,6 +136,14 @@ export default function Home() {
     };
   }, [wallet]);
 
+  useEffect(() => {
+    console.log('Wallet connection status:', {
+      connected,
+      publicKey: publicKey?.toString(),
+      timestamp: new Date().toISOString()
+    });
+  }, [connected, publicKey]);
+
   const handleMint = async (tsumeShogi: TsumeShogiNFT) => {
     if (!publicKey || !wallet) {
       toast.error('ウォレットを接続してください');
@@ -251,9 +259,11 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col items-center gap-4 mb-8">
-          <WalletMultiButton />
+          <div className="w-full max-w-xs">
+            <WalletMultiButton className="!bg-blue-600 hover:!bg-blue-700 w-full" />
+          </div>
           {walletStatus !== 'connected' && (
-            <div className={`p-3 rounded-lg text-center ${
+            <div className={`p-3 rounded-lg text-center w-full max-w-xs ${
               walletStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
               walletStatus === 'disconnecting' ? 'bg-yellow-100 text-yellow-800' :
               'bg-red-100 text-red-800'
@@ -264,15 +274,15 @@ export default function Home() {
             </div>
           )}
           {!wallet && (
-            <div className="text-yellow-600 bg-yellow-100 p-3 rounded-lg text-center">
-              Phantomウォレットをインストールしてください。
+            <div className="text-yellow-600 bg-yellow-100 p-3 rounded-lg text-center w-full max-w-xs">
+              <p className="mb-2">Phantomウォレットがインストールされていません。</p>
               <a 
                 href="https://phantom.app/download" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline ml-2"
+                className="text-blue-600 hover:underline inline-block"
               >
-                ダウンロードはこちら
+                Phantomをインストール
               </a>
             </div>
           )}

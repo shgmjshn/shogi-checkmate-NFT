@@ -85,11 +85,14 @@ export async function mintNFT(
       throw new Error('ウォレットが正しく接続されていません');
     }
 
+    if (!walletContext.publicKey) {
+      throw new Error('ウォレットが正しく接続されていません');
+    }
+
     // コミットメントレベルを'processed'に設定した新しいコネクションを作成
     const processedConnection = new Connection(connection.rpcEndpoint, {
       commitment: 'processed',
       confirmTransactionInitialTimeout: 30000,
-      wsEndpoint: connection.rpcEndpoint.replace('https', 'wss'),
     });
     
     const metaplex = Metaplex.make(processedConnection)
@@ -122,7 +125,13 @@ export async function mintNFT(
           isMutable: true,
         });
 
-        // トランザクションの確認を待機（より短いタイムアウト）
+        console.log('Transaction created:', {
+          signature: response.signature,
+          blockhash,
+          timestamp: new Date().toISOString()
+        });
+
+        // トランザクションの確認を待機
         const confirmation = await processedConnection.confirmTransaction({
           signature: response.signature,
           blockhash: lastBlockhash,
@@ -131,58 +140,6 @@ export async function mintNFT(
 
         if (confirmation.value.err) {
           throw new Error(`トランザクションの確認に失敗しました: ${confirmation.value.err}`);
-        }
-
-        // トランザクションの最終確認（より短い間隔で試行）
-        let status = null;
-        let confirmed = false;
-        const startTime = Date.now();
-        const timeout = 10000; // 10秒のタイムアウト
-
-        while (Date.now() - startTime < timeout) {
-          status = await processedConnection.getSignatureStatus(response.signature, {
-            searchTransactionHistory: true,
-          });
-          
-          if (status.value && !status.value.err) {
-            confirmed = true;
-            break;
-          }
-          
-          // より短い間隔で確認
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-
-        if (!confirmed || status?.value?.err) {
-          throw new Error(`トランザクションの最終確認に失敗しました: ${status?.value?.err || 'タイムアウト'}`);
-        }
-
-        // トランザクションの詳細を取得
-        const txInfo = await processedConnection.getTransaction(response.signature, {
-          maxSupportedTransactionVersion: 0
-        });
-
-        if (txInfo) {
-          // トランザクションの詳細をログ出力
-          console.log('Transaction details:', {
-            signature: response.signature,
-            timestamp: new Date().toISOString(),
-            slot: txInfo.slot,
-            blockTime: txInfo.blockTime,
-            fee: txInfo.meta?.fee,
-            err: txInfo.meta?.err,
-            computeUnits: txInfo.meta?.computeUnitsConsumed,
-            accounts: txInfo.meta?.loadedAddresses,
-            logs: txInfo.meta?.logMessages?.slice(0, 3)
-          });
-
-          // トランザクションのサイズに関する警告
-          if (txInfo.meta?.computeUnitsConsumed && txInfo.meta.computeUnitsConsumed > 200000) {
-            console.warn('Transaction compute units warning:', {
-              computeUnits: txInfo.meta.computeUnitsConsumed,
-              message: 'トランザクションの計算量が高い可能性があります'
-            });
-          }
         }
 
         console.log('NFT minted successfully:', {
@@ -205,8 +162,8 @@ export async function mintNFT(
              error.message.includes('Transaction simulation failed')) && 
             retryCount < maxRetries - 1) {
           retryCount++;
-          // 次の試行前に少し待機（より短い時間）
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // 次の試行前に少し待機
+          await new Promise(resolve => setTimeout(resolve, 500));
           continue;
         }
         throw error;
