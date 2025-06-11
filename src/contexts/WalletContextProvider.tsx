@@ -7,8 +7,8 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 
-// スタイルシートのインポート
-import '@solana/wallet-adapter-react-ui/styles.css';
+// カスタムスタイルのインポート
+import '../styles/wallet-adapter.css';
 
 interface Props {
   children: ReactNode;
@@ -33,22 +33,18 @@ export const WalletContextProvider: FC<Props> = ({ children }) => {
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider 
-        wallets={wallets} 
-        autoConnect={true}
-        onError={(error) => {
-          console.error('ウォレットエラー:', error);
-          if (error.name === 'WalletConnectionError') {
-            console.log('ウォレットの接続が必要です。Phantomウォレットをインストールして接続してください。');
-          } else if (error.name === 'WalletNotSelectedError') {
-            console.log('ウォレットが選択されていません。');
-          } else if (error.name === 'WalletNotConnectedError') {
-            console.log('ウォレットが接続されていません。');
-          } else if (error.name === 'WalletDisconnectedError') {
-            console.log('ウォレットが切断されました。');
-          }
-        }}
-      >
+      <WalletProvider wallets={wallets} autoConnect={true} onError={(error) => {
+        console.error('ウォレットエラー:', error);
+        if (error.name === 'WalletConnectionError') {
+          console.log('ウォレットの接続が必要です。Phantomウォレットをインストールして接続してください。');
+        } else if (error.name === 'WalletNotSelectedError') {
+          console.log('ウォレットが選択されていません。');
+        } else if (error.name === 'WalletNotConnectedError') {
+          console.log('ウォレットが接続されていません。');
+        } else if (error.name === 'WalletDisconnectedError') {
+          console.log('ウォレットが切断されました。');
+        }
+      }}>
         <WalletModalProvider>
           {children}
         </WalletModalProvider>
